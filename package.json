@@ -2,14 +2,14 @@
   "name": "ci",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "armin.akhavan@gmail.com",
   "license": "ISC",
   "dependencies": {
     "chroma-js": "^1.1.1",
-    "p5": "^0.4.19"
+    "d3": "^3.5.9"
   }
 }

@@ -1,0 +1,21 @@
+{
+  "name": "ci",
+  "description": "",
+  "main": "app.js",
+  "authors": [
+    "armin.akhavan@gmail.com"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/arminakvn/ci",
+  "moduleType": [
+    "node"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {}
+}
