@@ -11,7 +11,7 @@ var scale_height = 40;
 var x_0 = 220;
 var y_0 = 20;
 // start point of the scale at topleft
-
+var allColors = [];
 
 
 
@@ -80,7 +80,7 @@ var slidrSetup = svg.selectAll('.sliderColorDimension')
       .tickPadding(12)
       .tickValues([0, 1]))
   .select(".domain")
-  .select(function() {console.log(this); return this.parentNode.appendChild(this.cloneNode(true)); })
+  .select(function() {return this.parentNode.appendChild(this.cloneNode(true)); })
     .attr("class", "halo");
 
 var slider = svg.append("g")
@@ -110,7 +110,7 @@ slider
 colorMap = d3.map();
 function brushed() {
   var value = brush.extent()[0];
-  console.log(value);
+  // console.log(value);
   if (d3.event.sourceEvent) { // not a programmatic event
     handle.select('text');
     value = x.invert(d3.mouse(this)[0]);
@@ -144,16 +144,10 @@ function brushed() {
       .center([bostonLngLat[0],bostonLngLat[1]])
       .scale(100000/.5)
 
-  //TODO: create a geo path generator
+
   var pathGenerator = d3.geo.path().projection(projection);
 
-  //TODO: create a color scale
-  // calculate quantiles
 
-  
-  //var colorScale = d3.scale.linear().domain([0,.2]).range(['white','blue']);
-
-  //TODO: create a d3.map() to store the value of median HH income per block group
   var incomeById=d3.map()
   var blocks = [];
 
@@ -171,30 +165,79 @@ function brushed() {
       })
 
 
-// min = min(five_num_sum);
-// max = max(five_num_sum); 
-
-// // calculating the x of each subscales–which is the width of each could come out of it
-// subscales_x = [];
-// five_num_sum.forEach(function(numSum){
-
-//   scalex = map(numSum, min, max, 0, scale_width);
-//   subscales_x.push(scalex);
-
-
-// })
-// // could go into a d3 map object?
-// console.log(subscales_x);
   function makeUpdateColor(value) {
 
       mapUpdate  = d3.selectAll('.map-census');
-      console.log(mapUpdate);
+      // console.log(mapUpdate);
       chromacolor = chroma(210, .5, value, 'hsl');
   chromacolor2 = chroma(210, .5, .2, 'hsl');
- // makeColorScale(chromacolor, chromacolor2)
-
+allColors_select = [];
       colorScale=makeColorScale(chromacolor, chromacolor2);
-console.log(colorScale);
+
+      scale_range = [0, 1,2,3,4,5,6,7,8,9]
+    scale_range.forEach(function(blc){
+      
+       allColors_select.push(chroma_interploate(blc/10).hex());
+
+
+    })
+
+
+
+
+var scale_element = map
+        .append('g')
+        .selectAll('.legend_element')
+        .data(allColors_select, function(d, i){return i})
+        
+
+var scale_element_enter = scale_element.enter().append('rect')
+        .attr('class', 'legend_element')
+        .attr('width', 20)
+        .attr('height', 20)
+
+
+var scale_element_exit = scale_element.exit()
+        .transition()
+        .remove()
+
+        
+
+  scale_element.attr('y', function(d, i) {
+          console.log('i', i)
+          return 100+(i * 20);
+
+        })
+        .attr('x', function(d, i) {
+          return 400;
+
+        })
+        
+        .style('fill', function(d){
+          return d;
+        });
+    
+    // scale_element.exit().remove();
+
+        
+        
+    // scale_element
+    //     .attr('x', function(d, i) {
+    //       console.log('i', i)
+    //       return i * 30;
+
+    //     })
+    //     .attr('y', function(d, i) {
+    //       return 400;
+
+    //     })
+    //     .attr('width', 30)
+    //     .attr('height', 30)
+    //     .style('fill', function(d){
+    //       return d;
+    //     })
+
+// console.log(colorScale);
       var mapA =  map.selectAll('.map-census')
     //.data(data, function(d) { return d; });
           // .attr('d', pathGenerator)
@@ -204,7 +247,7 @@ console.log(colorScale);
               return colorScale(income);})
           // .call(getTooltips)
 
-      console.log("mapA", mapA);
+      // console.log("mapA", mapA);
       // mapUpdate.each(function(d) {
       //   console.log("each d", d, this)
       //   d3.select(this).style("fill", function(d) {
@@ -255,7 +298,6 @@ console.log(colorScale);
       var colorScale=makeColorScale(chromacolor, chromacolor2);
 
       
-
    
     var mapA =  map.append('g')
          .selectAll('.map2-neighbors')
@@ -267,11 +309,11 @@ console.log(colorScale);
           .attr('d', pathGenerator)
           .style('fill',function(d){
               var income=(incomeById.get(d.properties.geoid)).income
-              console.log(income);
+              // console.log(income);
               return colorScale(income);})
           // .call(getTooltips)
 
-      console.log("mapA", mapA);
+      // console.log("mapA", mapA);
 
       // census.features.forEach(function(feature){
         
@@ -311,26 +353,40 @@ var mapB= map.append('g')
           .style('fill','none')
           .style('stroke','white')
 
-          // mapB
-          // .append('text')
-          // .attr('class','text')
-          // .attr("text-anchor", "middle")
-          // .text(function(d){return d.properties.Name;})
-          // .attr('dx',function(d){return pathGenerator.centroid(d)[0]})
-          // .attr('dy',function(d){return pathGenerator.centroid(d)[1]})
-          // .style('fill','rgb(100,100,100)')
+var scale_element = map
+        .append('g')
+        .selectAll('.legend_element')
+        .data(allColors, function(d, i){return i})
+        
 
-          // mapB
-         // .on('mouseenter',function(d){
-         //     //console.log(this);
-         //     d3.select('text')
-         //         .transition().style('fill','rgb(77,225,38)')
-         // })
-         // .on('mouseleave',function(d){
-             // d3.select('text').style('fill','rgb(100,100,100)')
-      
-      
-      // })
+var scale_element_enter = scale_element.enter().append('rect')
+        .attr('class', 'legend_element')
+        .attr('width', 20)
+        .attr('height', 20)
+
+
+var scale_element_exit = scale_element.exit()
+        .transition()
+        .remove()
+
+        
+
+  scale_element
+        .attr('y', function(d, i) {
+          console.log('i', i)
+          return 100+(i * 20);
+
+        })
+        .attr('x', function(d, i) {
+          return 400;
+
+        })
+        
+        .style('fill', function(d){
+          return d;
+        });
+    
+
 
   }
 
@@ -350,6 +406,8 @@ var mapB= map.append('g')
       fiveSumNumScale(d3.max(blocks_sort))
     ];
     
+
+
     console.log(five_sum_num);
 
 
@@ -362,6 +420,25 @@ var mapB= map.append('g')
       chroma_interploate(five_sum_num[0.75]).hex(),
       chroma_interploate(five_sum_num[1]).hex()
     ]
+
+
+
+
+
+    //data for drawing the scale element
+
+    
+    scale_range = [0, 1,2,3,4,5,6,7,8,9]
+    scale_range.forEach(function(blc){
+      
+       allColors.push(chroma_interploate(blc/10).hex());
+
+
+    })
+    
+
+
+    // console.log("allColors", allColors);
 
       var colorScale=d3.scale.linear().domain([0,300000]).range(colorScaleInt);
     return colorScale;
@@ -380,7 +457,7 @@ var mapB= map.append('g')
              var name=(incomeById.get(d.properties.geoid)).name
               var value=(incomeById.get(d.properties.geoid)).income
               //console.log("name is "+name)
-              console.log("income is "+value)
+              // console.log("income is "+value)
 
               tooltip.select('#value').html(value);
               tooltip.select('#name').html(name);
@@ -450,7 +527,7 @@ var scales_data = [
 // calculating the width of the subscales
 
 
-console.log(scales_data);
+// console.log(scales_data);
 
 
 
