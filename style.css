@@ -4,13 +4,11 @@
 	list-style:none;
 }*/
 /*------------Global-------------*/
-/*html,body{
+html,body{
 	height: 100%;
-	background-color: #393939;
-  font-size: 14px;
+  font-size: 12px;
   font-family: 'Raleway', sans-serif;
-}*/
-
+}
 .container{
     height:100%;
 }
@@ -27,23 +25,27 @@
 	margin-bottom:20px;
 }
 
+.scale-label {
+  color: black;
+}
+
 /*-----------tooltip-----------*/
-/*.canvas .custom-tooltip{*/
-    /*position:absolute;*/
-    /*border:1px solid red;*/
+.custom-tooltip {
+    position:absolute;
+    border:none;
     /*width:150px;*/
-    /*min-height:10px;*/
-    /*padding:0px 10px;*/
-/*}*/
-/*.canvas .custom-tooltip{
+    min-height:10px;
+    padding:0px 10px;
+}
+.custom-tooltip{
 	position:absolute;
-	width:150px;
+	/*width:150px;*/
 	min-height:10px;
 	padding:0px 10px;
 	opacity:0;
 	background-color:rgba(100,100,100,.4)
 
-}*/
+}
 /*canvas {
     position:absolute;
     z-index:-1;

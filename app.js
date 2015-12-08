@@ -175,7 +175,7 @@ colorMap = d3.map();
 
       mapUpdate  = d3.selectAll('.map-census');
       // console.log(mapUpdate);
-      chromacolor2 = chroma(10, -5, -32, 'lab');
+      chromacolor2 = chroma(20, -5, -32, 'lab');
       chromacolor = chroma(90, -4, 12, 'lab');
       colorScale=makeColorScale(chromacolor, chromacolor2);
 
@@ -226,13 +226,19 @@ colorMap = d3.map();
   
   function draw2(census,neighbors){
 
-      chromacolor2 = chroma(20, 2, -12, 'lab');
-      chromacolor = chroma(90, -45, 42, 'lab');
+      chromacolor2 = chroma(25, -75, -12, 'lab');
+      chromacolor = chroma(110, -65, 42, 'lab');
 
       var colorScale=makeColorScale(chromacolor, chromacolor2);
 
-      
-   
+      _allFeaturesValueMap = census.features.map(function(d, i){
+        return incomeById.get(d.properties.geoid).income;
+      }
+        )
+      var allFeaturesValueMap = _allFeaturesValueMap.sort(function ascending(a, b) {
+        return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+      })
+    console.log("allFeaturesValueMap", allFeaturesValueMap);
     var mapA =  map.append('g')
          .selectAll('.map2-neighbors')
     .data(census.features)
@@ -241,9 +247,11 @@ colorMap = d3.map();
           .attr('class','map-census')
     //.data(data, function(d) { return d; });
           .attr('d', pathGenerator)
-          .style('fill',function(d){
-              var income=(incomeById.get(d.properties.geoid)).income
+          .style('fill',function(d,i){
+              income=(incomeById.get(d.properties.geoid)).income
+
               // console.log(income);
+              colorMap.set(colorScale(income), income);
               return colorScale(income);})
 
 
@@ -259,17 +267,47 @@ var mapB= map.append('g')
           .attr('d', pathGenerator)
           .style('fill','none')
           .style('stroke','white')
+var cell_w = 60;
+var cell_h = 60;
+var leg_x0 = 30;
+var leg_lh = 75;
+var leg_desc = 1 * leg_lh;
+var scale_element_g = map
+        .append('g'); 
 
-var scale_element = map
-        .append('g')
+
+
+// describtion texts need to be refactord in a data enter format        
+scale_element_g.append('g')
+.attr('transform', function(d){
+  return 'translate('+leg_x0+','+(leg_desc -3)+')';
+}).append("text").text("5 number summary")
+
+scale_element_g.append('g')
+.attr('transform', function(d){
+  return 'translate('+leg_x0+','+(leg_desc + leg_lh-3)+')';
+}).append("text").text("all data values")
+
+scale_element_g.append('g')
+.attr('transform', function(d){
+  return 'translate('+leg_x0+','+((2*leg_desc) + leg_lh-3)+')';
+}).append("text").text("equaldistant scale")
+
+
+
+
+var scale_element = scale_element_g.append('g')
         .selectAll('.legend_element')
         .data(allColors, function(d, i){return i})
         
 
+var cell_w = 60;
+var cell_h = 60;
+var data_allColors = allColors.length;
 var scale_element_enter = scale_element.enter().append('rect')
         .attr('class', 'legend_element')
-        .attr('width', 20)
-        .attr('height',20)
+        .attr('width', 60)
+        .attr('height',60)
 
 
 var scale_element_exit = scale_element.exit()
@@ -281,11 +319,11 @@ var scale_element_exit = scale_element.exit()
   scale_element
         .attr('y', function(d, i) {
           console.log('i', i)
-          return 400
+          return leg_lh
 
         })
         .attr('x', function(d, i) {
-          return 20+(i * 20);
+          return leg_x0+(i * 60);
 
         })
         
@@ -293,9 +331,68 @@ var scale_element_exit = scale_element.exit()
           return d;
         });
 
+  scale_element_total = scale_element_g.append('g')
+        .selectAll('.scale_element_total')
+        .data(allFeaturesValueMap, function(d, i){return i})
 
 
-        console.log("gradientallColors", gradientallColors)
+
+var data_total = allFeaturesValueMap.length;
+
+var scale_element_total_enter = scale_element_total.enter()
+    .append('g')
+    .append('rect')
+    .attr('class', 'scale_element_total') 
+    .attr('width', data_allColors * cell_w / data_total)
+    .attr('height', 60)
+    .attr('y', function(d, i) {
+          console.log('i', i)
+          return 2 * leg_lh
+
+        })
+        .attr('x', function(d, i) {
+          return leg_x0+(i * data_allColors * cell_w / data_total);
+
+        })
+        
+        .style('fill', function(d){
+          return colorScale(d);
+        })
+        .on('mouseenter',function(d){
+
+              var tooltip=d3.select('.custom-tooltip');
+              tooltip
+                  .transition()
+
+                  .style('opacity',1);
+
+             // var name=(incomeById.get(d.properties.geoid)).name
+              
+              var value=d
+              //console.log("name is "+name)
+              // console.log("income is "+value)
+
+              tooltip.select('#value').html(d3.format(', ')(value));
+              // tooltip.select('#name').html(name);
+
+          })
+          .on('mousemove',function(){
+              var xy=d3.mouse(canvas.node());
+              var tooltip=d3.select('.custom-tooltip');
+              tooltip
+                  .style('left',xy[0]+50+'px')
+                  .style('top',(xy[1]+50)+'px')
+              //.html('test');
+
+          })
+          .on('mouseleave',function(){
+              var tooltip=d3.select('custom-tooltip')
+                  .transition()
+                  .style('opacity',0);
+          })
+
+  
+
 
     var gradient_element = map
         .append('g')
@@ -303,10 +400,44 @@ var scale_element_exit = scale_element.exit()
         .data(gradientallColors, function(d, i){return i})
         
 
+  var datagradientallColors = gradientallColors.length
+
 var gradient_element_enter = gradient_element.enter().append('rect')
         .attr('class', 'gradient_element')
-        .attr('width', 1)
-        .attr('height',20)
+        .attr('width', data_allColors * cell_w / datagradientallColors)
+        .attr('height',60)
+        .on('mouseenter',function(d, i){
+
+              var tooltip=d3.select('.custom-tooltip');
+              tooltip
+                  .transition()
+
+                  .style('opacity',1);
+
+             // var name=(incomeById.get(d.properties.geoid)).name
+              var value=  d3.quantile(allFeaturesValueMap, (i/100))
+
+              //console.log("name is "+name)
+              // console.log("income is "+value)
+
+              tooltip.select('#value').html(d3.format(', ')(value.toFixed(2)));
+              // tooltip.select('#name').html(name);
+
+          })
+          .on('mousemove',function(){
+              var xy=d3.mouse(canvas.node());
+              var tooltip=d3.select('.custom-tooltip');
+              tooltip
+                  .style('left',xy[0]+50+'px')
+                  .style('top',(xy[1]+50)+'px')
+              //.html('test');
+
+          })
+          .on('mouseleave',function(){
+              var tooltip=d3.select('custom-tooltip')
+                  .transition()
+                  .style('opacity',0);
+          })
 
 
 var gradient_element_exit = gradient_element.exit()
@@ -318,11 +449,11 @@ var gradient_element_exit = gradient_element.exit()
   gradient_element
         .attr('y', function(d, i) {
           // console.log('i', i)
-          return 460
+          return 3 * leg_lh
 
         })
         .attr('x', function(d, i) {
-          return 20+(i * 1);
+          return leg_x0+(i * data_allColors * cell_w / datagradientallColors);
 
         })
         
@@ -339,7 +470,9 @@ var gradient_element_exit = gradient_element.exit()
   function makeColorScale(chromacolor, chromacolor2) {
 
     // console.log("blocks", blocks.sort());
-    blocks_sort = blocks.sort()
+    blocks_sort = blocks.sort(function ascending(a, b) {
+        return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+      });
     console.log("blocks_sort", blocks_sort)
     // var fiveSumNumScale = d3.scale.linear().range([0, 1]);
           // console.log("a", a);
@@ -406,13 +539,13 @@ var gradient_element_exit = gradient_element.exit()
 
                   .style('opacity',1);
 
-             var name=(incomeById.get(d.properties.geoid)).name
-              var value=(incomeById.get(d.properties.geoid)).income
+             // var name=(incomeById.get(d.properties.geoid)).name
+              var value=d
               //console.log("name is "+name)
               // console.log("income is "+value)
 
               tooltip.select('#value').html(value);
-              tooltip.select('#name').html(name);
+              // tooltip.select('#name').html(name);
 
           })
           .on('mousemove',function(){
