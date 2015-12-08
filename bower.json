@@ -17,5 +17,7 @@
     "test",
     "tests"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "semantic": "~2.1.6"
+  }
 }

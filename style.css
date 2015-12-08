@@ -1,15 +1,15 @@
-html,body,div,ul,li,svg{
+/*html,body,div,ul,li,svg{
 	margin:0;
 	padding:0;
 	list-style:none;
-}
+}*/
 /*------------Global-------------*/
-html,body{
+/*html,body{
 	height: 100%;
 	background-color: #393939;
   font-size: 14px;
   font-family: 'Raleway', sans-serif;
-}
+}*/
 
 .container{
     height:100%;
@@ -35,29 +35,26 @@ html,body{
     /*min-height:10px;*/
     /*padding:0px 10px;*/
 /*}*/
-.canvas .custom-tooltip{
+/*.canvas .custom-tooltip{
 	position:absolute;
-	/*border:1px solid grey;*/
 	width:150px;
 	min-height:10px;
 	padding:0px 10px;
 	opacity:0;
 	background-color:rgba(100,100,100,.4)
 
-}
-canvas {
+}*/
+/*canvas {
     position:absolute;
-    /*top:50;*/
-    /*left:0;*/
     z-index:-1;
-  }
+  }*/
 /*------------font-------------*/
-body{
+/*body{
 	font-size: 16px;
 }
 h1{ font-size:2em;}
 h2{ font-size:1.1em;}
-p{ font-size: .9em;}
+p{ font-size: .9em;}*/
 
 /*------------svg--------------*/
 #map {
@@ -72,11 +69,11 @@ p{ font-size: .9em;}
 
 
 /* slider */
-body {
+/*body {
   background-color: #393939;
   font-size: 14px;
   font-family: 'Raleway', sans-serif;
-}
+}*/
 
 p {
   color: white;
@@ -86,8 +83,29 @@ p {
 a {
   color: #4FDEF2;
 }
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
 
-.axis {
+.axis text {
+  font: 10px sans-serif;
+}
+
+#c .tick:last-of-type text {
+  display: none;
+}
+
+.channel canvas {
+  float: left;
+  margin: 40px 30px 0 30px;
+  width: 900px;
+  height: 90px;
+}
+
+.axis2 {
   fill: gray;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -95,6 +113,12 @@ a {
 }
 
 .axis .halo {
+  stroke: gray;
+  stroke-width: 4px;
+  stroke-linecap: round;
+}
+
+.axis2 .halo2 {
   stroke: gray;
   stroke-width: 4px;
   stroke-linecap: round;
@@ -114,8 +138,28 @@ a {
 }
 
 
+.slider2 .handle path {
+  stroke: white;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  pointer-events: none;
+}
 
-svg {
+.slider2 .handle text {
+  fill: white;
+  text-align: center;
+  font-size: 18px;
+}
+
+
+
+/*svg {
 	position: absolute;
     top: 50px;
 }
+
+
+svg2 {
+  position: absolute;
+    top: 250px;
+}*/
