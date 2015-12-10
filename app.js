@@ -23,7 +23,13 @@ var y_0 = 20;
 // start point of the scale at topleft
 var allColors = [];
 var gradientallColors = [];
+var cell_w = 60;
 
+var scales_total_width = cell_w*5;
+var cell_h = 60;
+var leg_x0 = 30;
+var leg_lh = 75;
+var leg_desc = 1 * leg_lh;
 
 
 var margin = {t:50,r:100,b:50,l:50};
@@ -36,27 +42,9 @@ var margin = {t:50,r:100,b:50,l:50};
 // sets scale for slider
 var slideWidth = 300;
 var slideHeight = 50;
-// var startingValue = 0.82;
-// var startingValue2 = 0.22;
-// var x = d3.scale.linear()
-//     .domain([0, 1])
-//     .range([0, slideWidth])
-//     .clamp(true);
-
-// defines brush
-// var brush = d3.svg.brush()
-//     .x(x)
-//     .extent([startingValue, startingValue])
-//     .on("brushstart", brushstart)
-//     .on("brush", brushed);
-
-// var brush2 = d3.svg.brush()
-//     .x(x)
-//     .extent([startingValue2, startingValue2])
-//     .on("brush", brushed2);
-
 
 var canvas = d3.select('#vis');
+var canvas2 = d3.select('#vis2');
   var map = canvas
       .append('svg')
       .attr('width',width)
@@ -66,91 +54,17 @@ var canvas = d3.select('#vis');
       .attr('transform','translate('+10+','+10+')');
 
 
-// var svg = d3.select("body").append("svg")
-//   .attr("width", width )
-//   .attr("height", height + margin.t + margin.b)
-//   .append("g")
-//   // classic transform to position g
-//   .attr("transform", "translate(" + margin.l + "," + margin.t + ")");
-
-
-
-// var svg2 = d3.select("body").append("svg")
-//   .attr("width", width )
-//   .attr("height", height + margin.t + margin.b)
-//   .append("g")
-//   // classic transform to position g
-//   .attr("transform", "translate(" + margin.l + "," + margin.t + ")");
+  var map2 = canvas2
+      .append('svg')
+      .attr('width',width)
+      .attr('height',height)
+      .append('g')
+      .attr('class','canvas')
+      .attr('transform','translate('+10+','+10+')');
 
 colorMap = d3.map();
-// function brushed() {
-//   console.log("brush eevent")
 
-//   // here do if else to figure our which slider???
-//   var value = brush.extent()[0];
-//   // console.log(value);
-//   if (d3.event.sourceEvent) { // not a programmatic event
-//     handle.select('text');
-//     handle2.select('text');
-//     value = x.invert(d3.mouse(this)[0]);
-//     brush.extent([value, value]);
-//     chromacolor = chroma(100, -100, -32, 'lab');
-//       chromacolor2 = chroma(120, -4, 12, 'lab');
-//       makeUpdateColor(value);
-//   }
-
-//   handle.attr("transform", "translate(" + x(value) + ",0)");
-//   handle.select('text').text((value))
-
-//   handle2.attr("transform", "translate(" + x(value) + ",0)");
-//   handle2.select('text').text((value))
-
-
-
-// }
-// var brushCell;
-// // Clear the previously-active brush, if any.
-//   function brushstart(p) {
-//     console.log("brushstart")
-//     if (brushCell !== this) {
-//       d3.select(brushCell).call(brush.clear());
-//       // x.domain(domainByTrait[p.x]);
-//       // y.domain(domainByTrait[p.y]);
-//       brushCell = this;
-//     }
-//   }
-
-
-// function brushed2() {
-
-//   // here do if else to figure our which slider???
-//   var value = brush2.extent()[0];
-//   // console.log(value);
-//   if (d3.event.sourceEvent) { // not a programmatic event
-//     handle2.select('text');
-//     value = x.invert(d3.mouse(this)[0]);
-//     brush2.extent([value, value]);
-    // chromacolor = chroma(210, .5, 0.8, 'lab');
-    //   chromacolor2 = chroma(210, .5, 0.2, 'lab');
-    //   makeUpdateColor(value);
-//   }
-
-//   handle.attr("transform", "translate(" + x(value) + ",0)");
-//   handle.select('text').text((value))
-
-
-// }
-
-
-
-  var bostonLngLat = [-71.088066,42.315520]; //from http://itouchmap.com/latlong.html
-  var projection = d3.geo.mercator()
-      .translate([width/2,height/2])
-      .center([bostonLngLat[0],bostonLngLat[1]])
-      .scale(100000/.5)
-
-
-  var pathGenerator = d3.geo.path().projection(projection);
+  
 
 
   var incomeById=d3.map()
@@ -159,13 +73,78 @@ colorMap = d3.map();
   //TODO: import data, parse, and draw
   queue()
       .defer(d3.json,'data/bos_census_blk_group.geojson')
-      .defer(d3.json,'data/bos_neighborhoods.geojson')
+      // .defer(d3.json,'data/bos_neighborhoods.geojson')
+      // .defer(d3.json,'data/towns_sim.geojson.json')
       .defer(d3.csv,'data/acs2013_median_hh_income.csv',parseData)
-      .await(function(err,census,neighbors){
-          
+      .await(function(err,census, blocks){
+        blocks_sort = blocks.sort(function ascending(a, b) {
+        return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+      });
+          // console.log("map-towns",towns, blocks)
+          var blockExtent = d3.extent(blocks_sort, function(d){return d;});
+          _allFeaturesValueMap = census.features.map(function(d, i){
+            return incomeById.get(d.properties.geoid).income;
+          }
+            )
+          var allFeaturesValueMap = _allFeaturesValueMap.sort(function ascending(a, b) {
+            return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+          })
 
+          total_extent = [0, d3.max(allFeaturesValueMap, function(d){return d;})]
+          colorScale=makeColorScale(chroma(20, -5, -32, 'lab'), chroma(90, -4, 12, 'lab'), total_extent);
+          var scale_channels = {
+            total: 
+              {
+                transform: 'translate('+leg_x0+','+(leg_lh-3)+')', 
+                text: "all data values", 
+                color2:chroma(20, -5, -32, 'lab'), 
+                color1: chroma(90, -4, 12, 'lab'),
+                _w: 5 * cell_w / allFeaturesValueMap.length, 
+                x:function(d,i){
+                  return leg_x0+(i * 5 * cell_w / allFeaturesValueMap.length);
+                }, 
+                y: 1 * leg_lh , 
+                data:allFeaturesValueMap, 
+                color: function (d){
+                  return colorScale(d);
+                }, 
+                extent: total_extent
+              },
+            // five_num: {transform: 'translate('+leg_x0+','+(leg_desc + leg_desc -3)+')', text: '5 number summary', color2:chroma(20, -5, -32, 'lab'), color1: chroma(90, -4, 12, 'lab'),_w: 60, x:function(d,i) {return leg_x0+(i * 60)}, y:2 *leg_lh, data: allColors, color: function (d){return d;}, extent: [0,1]},  
+            // eq_ds: {transform: 'translate('+leg_x0+','+((2*leg_desc) + leg_lh-3)+')', text: "all data values", color2:chroma(20, -5, -32, 'lab'), color1: chroma(90, -4, 12, 'lab'), _w: 5 * cell_w / 100, x:function(d,i){return leg_x0+(i * 5 * cell_w / 100)}, y:3 * leg_lh, data:gradientallColors, color: function (d){return d;}, extent: [0, 1]},
+          };
 
-          draw2(census,neighbors)
+          maps_channels = {
+            data: census, 
+            porjScale: 100000/.5, 
+            class: 'map-census', 
+            color2:chroma(20, -5, -32, 'lab'), 
+            color1: chroma(90, -4, 12, 'lab'), 
+            fillStyle: function(d){
+              var income=(incomeById.get(d.properties.geoid)).income; return 
+              colorScale(income);
+            },
+            extent: blocks_sort
+            // scale_: scale_channels
+          };
+            // 'towns': {data: towns, porjScale: 10000/.5, class: 'map-towns', color2:chroma(20, -5, -32, 'lab'), color1: chroma(90, -4, 12, 'lab'), fillStyle: function(d, i){return colorScale(i);},
+            // scale_: scale_channels
+            // }
+          // }
+          maps_channels = {
+            data: census, 
+            porjScale: 100000/.5, 
+            class: 'map-census', 
+            color2:chroma(20, -5, -32, 'lab'), 
+            color1: chroma(90, -4, 12, 'lab'), 
+            fillStyle: function(d){
+              var income=(incomeById.get(d.properties.geoid)).income; 
+              return colorScale(income);
+            },
+            extent: blocks_sort
+          }
+
+          draw2(maps_channels,census, allFeaturesValueMap, scale_channels)
           // the makeUpdateColor is the function to be called for realtime updating 
           // makeUpdateColor(100);
       })
@@ -174,46 +153,18 @@ colorMap = d3.map();
   function makeUpdateColor(value) {
 
       mapUpdate  = d3.selectAll('.map-census');
-      // console.log(mapUpdate);
       chromacolor2 = chroma(20, -5, -32, 'lab');
       chromacolor = chroma(90, -4, 12, 'lab');
       colorScale=makeColorScale(chromacolor, chromacolor2);
 
-      // scale_range = [0, 1,2,3,4,5,6,7,8,9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-    // allColors = [];
-    // console.log("_summer_num",five_sum_num)
-    // five_sum_num.forEach(function(blc){      
-    //    allColors.push(chroma_interploate(blc).hex());
-    // }) 
-
-    // scale_range.forEach(function(blc){
-      
-    //    allColors_select.push(chroma_interploate(blc/20).hex());
-
-
-    // })
-
-
-
-// console.log("_summer_num0", allColors)
 
 
       var mapA =  map.selectAll('.map-census')
-    //.data(data, function(d) { return d; });
-          // .attr('d', pathGenerator)
           .style('fill',function(d){
               var income=(incomeById.get(d.properties.geoid)).income
-              console.log(income);
               return colorScale(income);})
 
-
-
-      
-
-
-
   }
-
 
   function parseData(d){
       incomeById.set(
@@ -224,259 +175,235 @@ colorMap = d3.map();
   }     
 
   
-  function draw2(census,neighbors){
+  function draw2(_md, census, allFeaturesValueMap, scale_channels){
 
-      chromacolor2 = chroma(25, -75, -12, 'lab');
-      chromacolor = chroma(110, -65, 42, 'lab');
-
-      var colorScale=makeColorScale(chromacolor, chromacolor2);
-
-      _allFeaturesValueMap = census.features.map(function(d, i){
-        return incomeById.get(d.properties.geoid).income;
-      }
-        )
-      var allFeaturesValueMap = _allFeaturesValueMap.sort(function ascending(a, b) {
-        return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
-      })
-    console.log("allFeaturesValueMap", allFeaturesValueMap);
-    var mapA =  map.append('g')
-         .selectAll('.map2-neighbors')
-    .data(census.features)
-          .enter().append('g')
-        mapA.append('path')
-          .attr('class','map-census')
-    //.data(data, function(d) { return d; });
-          .attr('d', pathGenerator)
-          .style('fill',function(d,i){
-              income=(incomeById.get(d.properties.geoid)).income
-
-              // console.log(income);
-              colorMap.set(colorScale(income), income);
-              return colorScale(income);})
-
-
-var mapB= map.append('g')
-         .selectAll('.map2-neighbors')
-         .data(neighbors.features)
-         .enter()
-         .append('g')
-         .attr('class','map2-neighbors')
-
-         mapB
-         .append('path')
-          .attr('d', pathGenerator)
-          .style('fill','none')
-          .style('stroke','white')
-var cell_w = 60;
-var cell_h = 60;
-var leg_x0 = 30;
-var leg_lh = 75;
-var leg_desc = 1 * leg_lh;
-var scale_element_g = map
-        .append('g'); 
-
-
-
-// describtion texts need to be refactord in a data enter format        
-scale_element_g.append('g')
-.attr('transform', function(d){
-  return 'translate('+leg_x0+','+(leg_desc -3)+')';
-}).append("text").text("5 number summary")
-
-scale_element_g.append('g')
-.attr('transform', function(d){
-  return 'translate('+leg_x0+','+(leg_desc + leg_lh-3)+')';
-}).append("text").text("all data values")
-
-scale_element_g.append('g')
-.attr('transform', function(d){
-  return 'translate('+leg_x0+','+((2*leg_desc) + leg_lh-3)+')';
-}).append("text").text("equaldistant scale")
-
-
-
-
-var scale_element = scale_element_g.append('g')
-        .selectAll('.legend_element')
-        .data(allColors, function(d, i){return i})
-        
-
-var cell_w = 60;
-var cell_h = 60;
-var data_allColors = allColors.length;
-var scale_element_enter = scale_element.enter().append('rect')
-        .attr('class', 'legend_element')
-        .attr('width', 60)
-        .attr('height',60)
-
-
-var scale_element_exit = scale_element.exit()
-        .transition()
-        .remove()
-
-        
-
-  scale_element
-        .attr('y', function(d, i) {
-          console.log('i', i)
-          return leg_lh
-
-        })
-        .attr('x', function(d, i) {
-          return leg_x0+(i * 60);
-
-        })
-        
-        .style('fill', function(d){
-          return d;
-        });
-
-  scale_element_total = scale_element_g.append('g')
-        .selectAll('.scale_element_total')
-        .data(allFeaturesValueMap, function(d, i){return i})
-
-
-
-var data_total = allFeaturesValueMap.length;
-
-var scale_element_total_enter = scale_element_total.enter()
-    .append('g')
-    .append('rect')
-    .attr('class', 'scale_element_total') 
-    .attr('width', data_allColors * cell_w / data_total)
-    .attr('height', 60)
-    .attr('y', function(d, i) {
-          console.log('i', i)
-          return 2 * leg_lh
-
-        })
-        .attr('x', function(d, i) {
-          return leg_x0+(i * data_allColors * cell_w / data_total);
-
-        })
-        
-        .style('fill', function(d){
-          return colorScale(d);
-        })
-        .on('mouseenter',function(d){
-
-              var tooltip=d3.select('.custom-tooltip');
-              tooltip
-                  .transition()
-
-                  .style('opacity',1);
-
-             // var name=(incomeById.get(d.properties.geoid)).name
-              
-              var value=d
-              //console.log("name is "+name)
-              // console.log("income is "+value)
-
-              tooltip.select('#value').html(d3.format(', ')(value));
-              // tooltip.select('#name').html(name);
-
-          })
-          .on('mousemove',function(){
-              var xy=d3.mouse(canvas.node());
-              var tooltip=d3.select('.custom-tooltip');
-              tooltip
-                  .style('left',xy[0]+50+'px')
-                  .style('top',(xy[1]+50)+'px')
-              //.html('test');
-
-          })
-          .on('mouseleave',function(){
-              var tooltip=d3.select('custom-tooltip')
-                  .transition()
-                  .style('opacity',0);
-          })
-
-  
-
-
-    var gradient_element = map
-        .append('g')
-        .selectAll('.gradient_element')
-        .data(gradientallColors, function(d, i){return i})
-        
-
-  var datagradientallColors = gradientallColors.length
-
-var gradient_element_enter = gradient_element.enter().append('rect')
-        .attr('class', 'gradient_element')
-        .attr('width', data_allColors * cell_w / datagradientallColors)
-        .attr('height',60)
-        .on('mouseenter',function(d, i){
-
-              var tooltip=d3.select('.custom-tooltip');
-              tooltip
-                  .transition()
-
-                  .style('opacity',1);
-
-             // var name=(incomeById.get(d.properties.geoid)).name
-              var value=  d3.quantile(allFeaturesValueMap, (i/100))
-
-              //console.log("name is "+name)
-              // console.log("income is "+value)
-
-              tooltip.select('#value').html(d3.format(', ')(value.toFixed(2)));
-              // tooltip.select('#name').html(name);
-
-          })
-          .on('mousemove',function(){
-              var xy=d3.mouse(canvas.node());
-              var tooltip=d3.select('.custom-tooltip');
-              tooltip
-                  .style('left',xy[0]+50+'px')
-                  .style('top',(xy[1]+50)+'px')
-              //.html('test');
-
-          })
-          .on('mouseleave',function(){
-              var tooltip=d3.select('custom-tooltip')
-                  .transition()
-                  .style('opacity',0);
-          })
-
-
-var gradient_element_exit = gradient_element.exit()
-        .transition()
-        .remove()
-
-        
-
-  gradient_element
-        .attr('y', function(d, i) {
-          // console.log('i', i)
-          return 3 * leg_lh
-
-        })
-        .attr('x', function(d, i) {
-          return leg_x0+(i * data_allColors * cell_w / datagradientallColors);
-
-        })
-        
-        .style('fill', function(d){
-          return d;
-        });
     
 
 
-  }
+    // _map_data.forEach(function(_md){
+      // var colorScale=makeColorScale(_md.color1, _md.color2, _md.extent);
+
+
+      var bostonLngLat = [-71.088066,42.315520]; //from http://itouchmap.com/latlong.html
+      var projection = d3.geo.mercator()
+      .translate([width/2,height/2])
+      .center([bostonLngLat[0],bostonLngLat[1]])
+      .scale(_md.porjScale)
+
+      var pathGenerator = d3.geo.path().projection(projection);
+
+
+      var mapA =  map.append('g')
+         .selectAll('.' + _md.class)
+      .data(_md.data.features)
+            .enter().append('g')
+          mapA.append('path')
+            .attr('class',_md.class)
+      //.data(data, function(d) { return d; });
+            .attr('d', pathGenerator)
+            .style('fill', _md.fillStyle)
+
+    // })
 
 
 
-  function makeColorScale(chromacolor, chromacolor2) {
+      
 
-    // console.log("blocks", blocks.sort());
-    blocks_sort = blocks.sort(function ascending(a, b) {
-        return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
-      });
-    console.log("blocks_sort", blocks_sort)
-    // var fiveSumNumScale = d3.scale.linear().range([0, 1]);
-          // console.log("a", a);
-    // var _summer_num = [0, .25, .5, .75, 1]
+
+
+      
+
+
+
+  // var boston_proj = projection.scale(100000/.5)
+  // var region_proj = projection.scale(10000/.5)
+
+
+    // var pathGenerator = d3.geo.path().projection(boston_proj);
+
+
+    // var mapA =  map.append('g')
+    //      .selectAll('.map2-neighbors')
+    // .data(census.features)
+    //       .enter().append('g')
+    //     mapA.append('path')
+    //       .attr('class','map-census')
+    // //.data(data, function(d) { return d; });
+    //       .attr('d', pathGenerator)
+    //       .style('fill',function(d,i){
+    //           income=(incomeById.get(d.properties.geoid)).income
+    //           colorMap.get(colorScale(income), income);
+    //           return colorScale(income);})
+
+
+// var mapB= map.append('g')
+//          .selectAll('.map2-neighbors')
+//          .data(neighbors.features)
+//          .enter()
+//          .append('g')
+//          .attr('class','map2-neighbors')
+
+//          mapB
+//          .append('path')
+//           .attr('d', pathGenerator)
+//           .style('fill','none')
+//           .style('stroke','white')
+
+var data_allColors = allColors.length;
+// var data_total = allFeaturesValueMap.length;
+// var datagradientallColors = gradientallColors.length
+var scale_element_g = map
+        .append('g'); 
+
+//   pathGenerator = d3.geo.path().projection(region_proj);
+
+
+// var mapC =  map2.append('g')
+//          .selectAll('.map-towns')
+//     .data(towns.features)
+//           .enter().append('g')
+//     mapC.append('path')
+//           .attr('class','map-towns')
+//     //.data(data, function(d) { return d; });
+//           .attr('d', pathGenerator)
+          // .style('fill',function(d,i){
+          //     // income=(incomeById.get(d.properties.geoid)).income
+          //     colorMap.set(colorScale(income), income);
+          //     return colorScale(income);})
+
+
+
+
+
+
+
+
+
+
+var histogramScaleX = d3.scale.linear().domain([0,allFeaturesValueMap.length]).range([0,scales_total_width])
+var histogramScaleY = d3.scale.linear().domain(d3.extent(allFeaturesValueMap)).range([cell_h, 0])
+//axis generator
+var axisX = d3.svg.axis()
+    .orient('bottom')
+    .tickSize(5)
+    .tickValues([.25*allFeaturesValueMap.length, .5*allFeaturesValueMap.length, .75*allFeaturesValueMap.length])
+var axisY = d3.svg.axis()
+    .orient('left')
+    .tickSize(0)
+    .ticks(0);
+
+//scale axes
+axisX.scale(histogramScaleX);
+axisY.scale(histogramScaleY);
+
+//line generater    
+var line = d3.svg.line()
+    .x(function(d,i) { return histogramScaleX(i); })
+    .y(function(d) { return histogramScaleY(d); })
+    .interpolate("basis");
+
+histogram_chanel = scale_element_g.append('g').attr('class', 'histogram')
+                                      .append('g')
+                                      .attr('transform', 'translate('+leg_x0+',3)')
+   
+    histogram_chanel.append('g')
+        .attr('class','axis axis-x')
+        .attr('transform','translate(0,'+cell_h+')')
+        .call(axisX);
+    histogram_chanel.append('g')
+        .attr('class','axis axis-y')
+        .call(axisY);
+    // histogram_chanel.select('.axis-x')
+        // .selectAll('text')
+        // .attr('transform','rotate(90)translate(40,0)')
+    var histogram = histogram_chanel.append('path').attr('class','data-line')
+                                      .datum(allFeaturesValueMap)
+                                      .attr('d', line)
+    // var histogram_chanel_enter = histogram.enter()
+    //         .append('g')
+    //         .attr('class', 'histogram_chanel')
+
+
+    // var histogram_chanel_exit = histogram.exit()
+    //         .transition()
+    //         .remove()
+
+    // histogram
+    // .append('circles')
+    // .attr("r", 1)
+    // .style('fill', "black")
+    // .attr('cy', function(d,i){return histogramScaleY(d);})
+    // .attr('cx', function(d,i){return histogramScaleX(i);})        
+    // .call(popUp);
+
+
+
+
+
+
+
+// scale_channels = _map_data[0].value
+console.log("scale_channels",scale_channels)
+
+data = scale_channels.total
+
+
+//  here needs to do a for each
+
+// _data.forEach(function(data){
+  console.log(data)
+    // this_data = d3.values(data)data.value
+    colorScale = makeColorScale(data.color1, data.color2, data.extent)
+    var scales_channels_ = scale_element_g.append('g');
+    var scales = scales_channels_.selectAll('.legend_element')
+                                      .data(data.data)
+    var scales_channels_enter = scales.enter()
+            .append('rect')
+            .attr('class', 'legend_element')
+            .attr('width', data._w)
+            .attr('height',60)
+
+    var scales_channels_exit = scales.exit()
+            .transition()
+            .remove()
+
+    scales.attr('y', data.y)
+    .attr('x', data.x)        
+    .style('fill', data.color)
+    .call(popUp);
+
+// })
+
+function popUp(selection) {
+  selection.on('mouseenter',function(d){
+
+              var tooltip=d3.select('.custom-tooltip');
+              tooltip
+                  .transition()
+                  .style('opacity',1);
+              var value=d
+              tooltip.select('#value').html(value);
+
+          })
+          .on('mousemove',function(){
+              var xy=d3.mouse(canvas.node());
+              var tooltip=d3.select('.custom-tooltip');
+              tooltip
+                  .style('left',xy[0]+50+'px')
+                  .style('top',(xy[1]+50)+'px')
+
+          })
+          .on('mouseleave',function(){
+              var tooltip=d3.select('custom-tooltip')
+                  .transition()
+                  .style('opacity',0);
+          })
+}    
+
+}
+  function makeColorScale(chromacolor, chromacolor2, blocks_sort) {
+    extent = d3.extent(blocks_sort, function(d){return d;})
+
     var five_sum_num=[
         d3.min(blocks_sort, function(d){return d;}),
         d3.quantile(blocks_sort, 0.25),
@@ -484,20 +411,7 @@ var gradient_element_exit = gradient_element.exit()
         d3.quantile(blocks_sort, 0.75),
         d3.max(blocks_sort, function(d){return d;})
     ];
-    // _summer_num.forEach(function(_num){
-    //   five_sum_num.push(
-    //     // fiveSumNumScale(
-    //       d3.quantile(blocks_sort, _num)
-    //       // )
-    //     );
-    // })
-    
-
-
-    console.log(five_sum_num,chromacolor, chromacolor.hex(), chromacolor2.hex());
-
-
-      chroma_interploate = chroma.scale([chromacolor, chromacolor2]).mode('lab').domain(d3.extent(blocks_sort, function(d){return d;}));
+      chroma_interploate = chroma.scale([chromacolor2, chromacolor]).mode('lab').domain(extent);
       
       //for if want to use only d3
       d3_interpolat =  d3.scale.linear()
@@ -509,8 +423,6 @@ var gradient_element_exit = gradient_element.exit()
     five_sum_num.forEach(function(_num){
       colorScaleInt.push(chroma_interploate(_num).hex());
     })
-
-
     //data-scaled-to-color for drawing the scale element
 
     five_sum_num.forEach(function(num){      
@@ -536,17 +448,9 @@ var gradient_element_exit = gradient_element.exit()
               var tooltip=d3.select('.custom-tooltip');
               tooltip
                   .transition()
-
                   .style('opacity',1);
-
-             // var name=(incomeById.get(d.properties.geoid)).name
               var value=d
-              //console.log("name is "+name)
-              // console.log("income is "+value)
-
               tooltip.select('#value').html(value);
-              // tooltip.select('#name').html(name);
-
           })
           .on('mousemove',function(){
               var xy=d3.mouse(canvas.node());
@@ -566,43 +470,4 @@ var gradient_element_exit = gradient_element.exit()
   }
   
 
- var scales_data = [
-  {
-    "subscales": [
-      [
-        {
-          subscale_size: 1,
-          subscale_width:0,
-          start_chroma: chroma(0, 1, 0.5, 'lab'),
-          cells: []
-        }
-      ],
-      [
-        {
-          subscale_size: 1,
-          subscale_width:0,
-          start_chroma: chroma(10, 1, 0.5, 'lab'),
-          cells: []
-        }
-      ],
-      [
-      {
-          subscale_size: 1,
-          subscale_width:0,
-          start_chroma: chroma(100, 1, 0.5, 'lab'),
-          cells: []
-        }
-      ],
-      [
-        {
-          subscale_size: 1,
-          subscale_width:0,
-          start_chroma: chroma(130, 1, 0.5, 'lab'),
-          cells: []
-        }
-      ]
-    ]
-
-  }
-]
 

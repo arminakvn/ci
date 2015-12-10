@@ -85,15 +85,33 @@ p {
 a {
   color: #4FDEF2;
 }
-.axis path,
-.axis line {
+.axis path {
   fill: none;
   stroke: #000;
+  stroke-opacity: 0.2;
+  shape-rendering: crispEdges;
+}
+.axis.axis-y path {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: 0.1;
   shape-rendering: crispEdges;
 }
 
 .axis text {
   font: 10px sans-serif;
+}
+.axis .domain{
+    fill:none
+}
+.axis .tick line{
+    fill:none;
+    stroke: #000;
+  stroke-opacity: 0.5;
+    stroke-width:1px;
+}
+.axis .tick text{
+    display: none;
 }
 
 #c .tick:last-of-type text {
@@ -153,7 +171,11 @@ a {
   font-size: 18px;
 }
 
-
+.data-line{
+    fill:none;
+    stroke-width:1px;
+    stroke:#000;
+  }
 
 /*svg {
 	position: absolute;
